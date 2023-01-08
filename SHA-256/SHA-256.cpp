@@ -3,6 +3,17 @@
 
 using namespace std;
 
+void add_text() {
+	char text[10000];
+	cout << "Write your text: ";
+	cin.ignore();
+	cin.getline(text, 10000);
+	fstream write("files/file.txt", ios::out);
+	write << text;
+	write.close();
+	cout << endl;
+}
+
 int main() {
 	int answer = 0;
 	cout << "Hi" << endl << endl;
@@ -16,7 +27,20 @@ int main() {
 		cout << "Write your answer: ";
 		cin >> answer; 
 		cout << endl;
-		if (answer > 5 || answer < 1)
+		if (answer == 1) {
+			add_text();
+		}
+		else if (answer == 2) {
+
+		}
+		else if (answer == 3) {
+
+		}
+		else if (answer == 4) {
+
+		}
+		else if (answer == 5);
+		else
 			cout << "Incorrect input" << endl << endl;
 	}
 }
