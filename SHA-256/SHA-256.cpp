@@ -149,15 +149,21 @@ void creating_message_schedule(int mes_sched[64][32], int** mes_block, int rows)
 	}
 }
 
-void add_round_constants(int k_const[64][32]) {
+int from_hex_char_to_int(char hex) {
+	int num;
+	if ((int)hex >= 97 && (int)hex <= 102)
+		num = 15 + (int)hex - 102;
+	else
+		num = (int)hex - 48;
+	return num;
+}
+
+void get_round_constants(int k_const[64][32]) {
 	fstream read("resources/round_constants.txt", ios::in);
 	char reader;
 	int row = 0, pos = 0, num_of_hex_symb;
 	while (read >> reader) {
-		if ((int)reader >= 97 && (int)reader <= 102)
-			num_of_hex_symb = 15 + (int)reader - 102;
-		else
-			num_of_hex_symb = (int)reader - 48;
+		num_of_hex_symb = from_hex_char_to_int(reader);
 		bitset<4> bin(num_of_hex_symb);
 		for (int i = 3; i >= 0; i--, pos++) {
 			k_const[row][pos] = bin[i];
@@ -170,23 +176,34 @@ void add_round_constants(int k_const[64][32]) {
 	read.close();
 }
 
+void get_hash_values(int h_val[8][32]) {
+	fstream read("resources/hash_values.txt", ios::in);
+	char reader;
+	int row = 0, pos = 0, num_of_hex_symb;
+	while (read >> reader) {
+		num_of_hex_symb = from_hex_char_to_int(reader);
+		bitset<4> bin(num_of_hex_symb);
+		for (int i = 3; i >= 0; i--, pos++) {
+			h_val[row][pos] = bin[i];
+		}
+		if (pos == 32) {
+			pos = 0;
+			row++;
+		}
+	}
+	read.close();
+}
+
 void hash_func() {
 	int count_rows = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
-	int mes_schedule[64][32], round_const[64][32];
+	int mes_schedule[64][32], round_const[64][32], hash_val[8][32];
 	for (int i = 0; i < count_rows; i++)
 		mes_block[i] = new int[32];
 	message_to_bin(mes_block, count_rows);
 	creating_message_schedule(mes_schedule, mes_block, count_rows);
-	add_round_constants(round_const);
-	for (int i = 0; i < 64; i++)
-	{
-		for (int j = 0; j < 32; j++)
-		{
-			cout << round_const[i][j];
-		}
-		cout << endl;
-	}
+	get_round_constants(round_const);
+	get_hash_values(hash_val);
 	for (int i = 0; i < count_rows; i++)
 		delete mes_block[i];
 	delete[] mes_block;
