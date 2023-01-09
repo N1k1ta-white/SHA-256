@@ -25,46 +25,51 @@ int size_of_text() {
 	return res;
 }
 
-void message_to_bin(int chunks) {
-	char reader;
-	int time = 0, strings = 1;
+void message_to_bin(int **mes_block, int chunks) {
+	char reader, column = 0, row = 0;
 	fstream read("files/file.txt", ios::in);
-	fstream write("files/message_block.txt", ios::out);
 	while (read >> noskipws >> reader) {
 		bitset<8> bin(reader);
-		write << bin;
-		if (time == 3) {
-			write << endl;
-			time = -1;
-			strings++;
+		for (int i = 7; i >= 0; i--, column++)
+			mes_block[row][column] = bin[i];
+		if (column == 32) {
+			row++;
+			column = 0;
 		}
-		time++;
 	}
 	bitset<8> bin(128);
-	write << bin;
-	time++;
-	for (int i = time; i < 4; i++) {
-		bitset<8> bin(0);
-		write << bin;
+	for (int i = 7; i >= 0; i--, column++)
+		mes_block[row][column] = bin[i];
+	if (column == 32) {
+		row++;
+		column = 0;
 	}
-	write << endl;
-	strings++;
-	while (strings++ != chunks * 16 - 1) {
-		write << "00000000000000000000000000000000" << endl;
+	while (row != chunks - 2) {
+		for (int i = column; i < 32; i++)
+			mes_block[row][i] = 0;
+		column = 0;
+		row++;
 	}
-	bitset<64> size(size_of_text() * 8);
-	for (int i = 63; i >= 0; i--) {
-		write << size[i];
-		if (i == 32)
-			write << endl;
-	}
+	bitset<64> bin_size(size_of_text() * 8);
+	for (int i = 0; i < 32; i++)
+		mes_block[row][i] = bin_size[63 - i];
+	row++;
+	for (int i = 0; i < 32; i++)
+		mes_block[row][i] = bin_size[31 - i];
 	read.close();
-	write.close();
 }
 
+
 void hash_func() {
-	int count_chunk = (size_of_text() * 8 + 1 + 64) / 512 + 1;
-	message_to_bin(count_chunk);
+	int count_chunk = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
+	int** mes_block = new int* [count_chunk];
+	for (int i = 0; i < count_chunk; i++)
+		mes_block[i] = new int[32];
+	message_to_bin(mes_block, count_chunk);
+
+	for (int i = 0; i < count_chunk; i++)
+		delete mes_block[i];
+	delete[] mes_block;
 }
 
 int main() {
