@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <fstream>
+#include <bitset>
 
 using namespace std;
 
@@ -12,6 +13,58 @@ void add_text() {
 	write << text;
 	write.close();
 	cout << endl;
+}
+
+int size_of_text() {
+	char reader;
+	fstream read("files/file.txt", ios::in);
+	int res = 0;
+	while (read >> noskipws >> reader)
+		res++;
+	read.close();
+	return res;
+}
+
+void message_to_bin(int chunks) {
+	char reader;
+	int time = 0, strings = 1;
+	fstream read("files/file.txt", ios::in);
+	fstream write("files/message_block.txt", ios::out);
+	while (read >> noskipws >> reader) {
+		bitset<8> bin(reader);
+		write << bin;
+		if (time == 3) {
+			write << endl;
+			time = -1;
+			strings++;
+		}
+		time++;
+	}
+	bitset<8> bin(128);
+	write << bin;
+	time++;
+	for (int i = time; i < 4; i++) {
+		bitset<8> bin(0);
+		write << bin;
+	}
+	write << endl;
+	strings++;
+	while (strings++ != chunks * 16 - 1) {
+		write << "00000000000000000000000000000000" << endl;
+	}
+	bitset<64> size(size_of_text() * 8);
+	for (int i = 63; i >= 0; i--) {
+		write << size[i];
+		if (i == 32)
+			write << endl;
+	}
+	read.close();
+	write.close();
+}
+
+void hash_func() {
+	int count_chunk = (size_of_text() * 8 + 1 + 64) / 512 + 1;
+	message_to_bin(count_chunk);
 }
 
 int main() {
@@ -31,7 +84,7 @@ int main() {
 			add_text();
 		}
 		else if (answer == 2) {
-
+			hash_func();
 		}
 		else if (answer == 3) {
 
