@@ -59,15 +59,105 @@ void message_to_bin(int **mes_block, int chunks) {
 	read.close();
 }
 
+void right_rotate(int bin[], int num) {
+	int clone[32];
+	for (int i = 0; i < 32; i++)
+		clone[i] = bin[i];
+	for (int i = 0; i < num; i++)
+		bin[i] = clone[32 - num + i];
+	for (int i = num; i < 32; i++)
+		bin[i] = clone[i - num];
+}
+
+void right_shift(int bin[], int num) {
+	right_rotate(bin, num);
+	for (int i = 0; i < num; i++)
+		bin[i] = 0;
+}
+
+void xor_bin(int res[], int bin1[], int bin2[], int bin3[]) {
+	for (int i = 0; i < 32; i++) {
+		res[i] = bin1[i] + bin2[i] + bin3[i];
+		if (res[i] > 1)
+			res[i] -= 2;
+	}
+}
+
+void read_bin(int bin[], int mes_sched[64][32], int pos) {
+	for (int i = 0; i < 32; i++)
+		bin[i] = mes_sched[pos][i];
+}
+
+void create_sigma0(int s0[], int mes_sched[64][32], int pos) {
+	int bin1[32], bin2[32], bin3[32];
+	read_bin(bin1, mes_sched, pos - 15);
+	read_bin(bin2, mes_sched, pos - 15);
+	read_bin(bin3, mes_sched, pos - 15);
+	right_rotate(bin1, 7);
+	right_rotate(bin2, 18);
+	right_shift(bin3, 3);
+	xor_bin(s0, bin1, bin2, bin3);
+}
+
+void create_sigma1(int s1[], int mes_sched[64][32], int pos) {
+	int bin1[32], bin2[32], bin3[32];
+	read_bin(bin1, mes_sched, pos - 2);
+	read_bin(bin2, mes_sched, pos - 2);
+	read_bin(bin3, mes_sched, pos - 2);
+	right_rotate(bin1, 17);
+	right_rotate(bin2, 19);
+	right_shift(bin3, 10);
+	xor_bin(s1, bin1, bin2, bin3);
+}
+
+void addition_bin(int res[], int bin1[], int bin2[]) {
+	for (int i = 0; i < 32; i++)
+		res[i] = 0;
+	for (int i = 31; i >= 0; i--) {
+		res[i] += bin1[i] + bin2[i];
+		if (res[i] > 1) {
+			res[i] -= 2;
+			if (i - 1 != -1)
+				res[i - 1]++;
+		}
+	}
+}
+
+void create_new_bin(int new_row[32], int mes_sched[64][32], int pos) {
+	int sigma0[32], sigma1[32], bin_num1[32], bin_num2[32], plus_sigms[32], plus_bins[32];
+	create_sigma0(sigma0, mes_sched, pos);
+	create_sigma1(sigma1, mes_sched, pos);
+	read_bin(bin_num1, mes_sched, pos - 16);
+	read_bin(bin_num2, mes_sched, pos - 7);
+	addition_bin(plus_sigms, sigma0, sigma1);
+	addition_bin(plus_bins, bin_num1, bin_num2);
+	addition_bin(new_row, plus_bins, plus_sigms);
+}
+
+void creating_message_schedule(int mes_sched[64][32], int** mes_block, int rows) {
+	int new_row[32];
+	for (int i = 0; i < 16; i++) {
+		for (int j = 0; j < 32; j++) {
+			mes_sched[i][j] = mes_block[rows - 16 + i][j];
+		}
+	}
+	for (int i = 16; i < 64; i++) {
+		create_new_bin(new_row, mes_sched, i);
+		for (int j = 0; j < 32; j++) {
+			mes_sched[i][j] = new_row[j];
+		}
+	}
+}
 
 void hash_func() {
-	int count_chunk = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
-	int** mes_block = new int* [count_chunk];
-	for (int i = 0; i < count_chunk; i++)
+	int count_rows = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
+	int** mes_block = new int* [count_rows];
+	int mes_schedule[64][32];
+	for (int i = 0; i < count_rows; i++)
 		mes_block[i] = new int[32];
-	message_to_bin(mes_block, count_chunk);
-
-	for (int i = 0; i < count_chunk; i++)
+	message_to_bin(mes_block, count_rows);
+	creating_message_schedule(mes_schedule, mes_block, count_rows);
+	for (int i = 0; i < count_rows; i++)
 		delete mes_block[i];
 	delete[] mes_block;
 }
