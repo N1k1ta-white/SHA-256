@@ -9,7 +9,7 @@ void add_text() {
 	cout << "Write your text: ";
 	cin.ignore();
 	cin.getline(text, 10000);
-	fstream write("files/file.txt", ios::out);
+	fstream write("files/message.txt", ios::out);
 	write << text;
 	write.close();
 	cout << endl;
@@ -17,7 +17,7 @@ void add_text() {
 
 int size_of_text() {
 	char reader;
-	fstream read("files/file.txt", ios::in);
+	fstream read("files/message.txt", ios::in);
 	int res = 0;
 	while (read >> noskipws >> reader)
 		res++;
@@ -27,7 +27,7 @@ int size_of_text() {
 
 void message_to_bin(int **mes_block, int chunks) {
 	char reader, column = 0, row = 0;
-	fstream read("files/file.txt", ios::in);
+	fstream read("files/message.txt", ios::in);
 	while (read >> noskipws >> reader) {
 		bitset<8> bin(reader);
 		for (int i = 7; i >= 0; i--, column++)
@@ -332,10 +332,47 @@ void transform_work_val(int work_val[8][32], int mes_schedule[64][32], int round
 	addition_hash_work_val(work_val);
 }
 
+char bin_to_char(int bin[4]) {
+	int num = 0, bit_num;
+	for (int i = 3; i >= 0; i--) {
+		bit_num = bin[i];
+		for (int j = 0; j < 3 - i; j++)
+			bit_num *= 2;
+		num += bit_num;
+	}
+	if (num < 10)
+		return (char)(48 + num);
+	else
+		return (char)(97 - 10 + num);
+}
+
+void create_and_save_hash(char hash[], int work_val[8][32]) {
+	int bin[4];
+	fstream save("files/hash.txt", ios::out);
+	for (int i = 0, pos_w_val = 0; i < 8; i++, pos_w_val = 0) {
+		for (int j = 0; j < 8; j++) {
+			for (int l = 0; l < 4; l++)	{
+				bin[l] = work_val[i][pos_w_val++];
+			}
+			save << bin_to_char(bin);
+		}
+	}
+	save.close();
+}
+
+void read_hash() {
+	char reader;
+	fstream read("files/hash.txt", ios::in);
+	while (read >> reader)
+		cout << reader;
+	read.close();
+}
+
 void hash_func() {
 	int count_rows = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
-	int mes_schedule[64][32], round_const[64][32], work_val[8][32], hash_val[8][32];
+	int mes_schedule[64][32], round_const[64][32], work_val[8][32];
+	char hash[32];
 	for (int i = 0; i < count_rows; i++)
 		mes_block[i] = new int[32];
 	message_to_bin(mes_block, count_rows);
@@ -346,6 +383,8 @@ void hash_func() {
 	get_round_constants(round_const);
 	get_hash_values(work_val);
 	transform_work_val(work_val, mes_schedule, round_const);
+	create_and_save_hash(hash, work_val);
+	read_hash();
 }
 
 int main() {
@@ -366,10 +405,9 @@ int main() {
 		}
 		else if (answer == 2) {
 			hash_func();
-			answer = 5;
 		}
 		else if (answer == 3) {
-
+			read_hash();
 		}
 		else if (answer == 4) {
 
