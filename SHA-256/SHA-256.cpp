@@ -25,9 +25,13 @@ int size_of_text() {
 	return res;
 }
 
-void message_to_bin(int **mes_block, int chunks) {
+void message_to_bin(int **mes_block, int chunks, int func) {
 	char reader, column = 0, row = 0;
-	fstream read("files/message.txt", ios::in);
+	fstream read;
+	if (func == 0)
+		read.open("files/message.txt", ios::in);
+	else
+		read.open("files/user_value.txt", ios::in);
 	while (read >> noskipws >> reader) {
 		bitset<8> bin(reader);
 		for (int i = 7; i >= 0; i--, column++)
@@ -346,9 +350,13 @@ char bin_to_char(int bin[4]) {
 		return (char)(97 - 10 + num);
 }
 
-void create_and_save_hash(char hash[], int work_val[8][32]) {
+void create_and_save_hash(int work_val[8][32], int func) {
 	int bin[4];
-	fstream save("files/hash.txt", ios::out);
+	fstream save;
+	if (func == 0)
+		save.open("files/hash.txt", ios::out);
+	else
+		save.open("files/hash_comp.txt", ios::out);
 	for (int i = 0, pos_w_val = 0; i < 8; i++, pos_w_val = 0) {
 		for (int j = 0; j < 8; j++) {
 			for (int l = 0; l < 4; l++)	{
@@ -366,16 +374,17 @@ void read_hash() {
 	while (read >> reader)
 		cout << reader;
 	read.close();
+	cout << endl;
+	cin.ignore();
 }
 
-void hash_func() {
+void hash_func(int func = 0) {
 	int count_rows = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
 	int mes_schedule[64][32], round_const[64][32], work_val[8][32];
-	char hash[32];
 	for (int i = 0; i < count_rows; i++)
 		mes_block[i] = new int[32];
-	message_to_bin(mes_block, count_rows);
+	message_to_bin(mes_block, count_rows, func);
 	create_message_schedule(mes_schedule, mes_block, count_rows);
 	for (int i = 0; i < count_rows; i++)
 		delete mes_block[i];
@@ -383,37 +392,69 @@ void hash_func() {
 	get_round_constants(round_const);
 	get_hash_values(work_val);
 	transform_work_val(work_val, mes_schedule, round_const);
-	create_and_save_hash(hash, work_val);
-	read_hash();
+	create_and_save_hash(work_val, func);
+}
+
+void get_hash(char hash[]) {
+	fstream read("files/hash_comp.txt", ios::in);
+	char reader;
+	int pos = 0;
+	while (read >> reader) {
+		hash[pos++] = reader;
+	}
+	read.close();
+}
+
+bool valid_hash() {
+	cin.ignore();
+	char user_hash[65], user_val[10000], hash[64];
+	cout << "Enter your hash: ";
+	cin.getline(user_hash, 65);
+	cout << "Enter your message: ";
+	cin.getline(user_val, 10000);
+	fstream write("files/user_value.txt", ios::out);
+	write << user_val;
+	write.close();
+	hash_func(1);
+	get_hash(hash);
+	for (int i = 0; i < 64; i++) {
+		if (hash[i] != user_hash[i])
+			return false;
+	}
+	return true;
 }
 
 int main() {
-	int answer = 0;
-	cout << "Hi" << endl << endl;
-	while (answer != 5) {
+	char answer = ' ';
+	cout << "Hi\n";
+	while (answer != '5') {
 		cout << "What do you want do?" << endl;
 		cout << "1. Add text to file" << endl;
 		cout << "2. Hash your file" << endl;
 		cout << "3. Read your last hash again" << endl;
-		cout << "4. Do a check of your hash" << endl;
+		cout << "4. Validating the hash" << endl;
 		cout << "5. Exit" << endl;
 		cout << "Write your answer: ";
-		cin >> answer; 
+		cin.get(answer);
 		cout << endl;
-		if (answer == 1) {
+		if (answer == '1') {
 			add_text();
 		}
-		else if (answer == 2) {
+		else if (answer == '2') {
 			hash_func();
-		}
-		else if (answer == 3) {
 			read_hash();
 		}
-		else if (answer == 4) {
-
+		else if (answer == '3') {
+			read_hash();
 		}
-		else if (answer == 5);
+		else if (answer == '4') {
+			if (!valid_hash())
+				cout << "Your hash is wrong\n";
+			else
+				cout << "Your hash is correct\n";
+		}
+		else if (answer == '5');
 		else
-			cout << "Incorrect input" << endl << endl;
+			cout << "Incorrect input\n";
 	}
 }
