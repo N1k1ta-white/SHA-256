@@ -1,4 +1,20 @@
-﻿#include <iostream>
+﻿/**
+*
+* Solution to course project # 6
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2022/2023
+*
+* @author Nikita Biliy
+* @idnumber 9MI8000022
+* @compiler VC
+*
+* main code
+*
+*/
+
+
+#include <iostream>
 #include <fstream>
 #include <bitset>
 
@@ -7,7 +23,6 @@ using namespace std;
 void add_text() {
 	char text[10000];
 	cout << "Write your text: ";
-	cin.ignore();
 	cin.getline(text, 10000);
 	fstream write("files/message.txt", ios::out);
 	write << text;
@@ -15,9 +30,13 @@ void add_text() {
 	cout << endl;
 }
 
-int size_of_text() {
+int size_of_text(int func) {
 	char reader;
-	fstream read("files/message.txt", ios::in);
+	fstream read;
+	if (func == 0)
+		read.open("files/message.txt", ios::in);
+	else
+		read.open("files/user_value.txt", ios::in);
 	int res = 0;
 	while (read >> noskipws >> reader)
 		res++;
@@ -54,7 +73,7 @@ void message_to_bin(int **mes_block, int chunks, int func) {
 		column = 0;
 		row++;
 	}
-	bitset<64> bin_size(size_of_text() * 8);
+	bitset<64> bin_size(size_of_text(func) * 8);
 	for (int i = 0; i < 32; i++)
 		mes_block[row][i] = bin_size[63 - i];
 	row++;
@@ -64,13 +83,13 @@ void message_to_bin(int **mes_block, int chunks, int func) {
 }
 
 void right_rotate(int bin[], int num) {
-	int clone[32];
+	int clone_bin[32];
 	for (int i = 0; i < 32; i++)
-		clone[i] = bin[i];
+		clone_bin[i] = bin[i];
 	for (int i = 0; i < num; i++)
-		bin[i] = clone[32 - num + i];
+		bin[i] = clone_bin[32 - num + i];
 	for (int i = num; i < 32; i++)
-		bin[i] = clone[i - num];
+		bin[i] = clone_bin[i - num];
 }
 
 void right_shift(int bin[], int num) {
@@ -87,16 +106,16 @@ void xor_bin(int res[], int bin1[], int bin2[], int bin3[]) {
 	}
 }
 
-void read_bin_from_mes_schedule(int bin[], int mes_sched[64][32], int pos) {
+void read_bin_from_arrays(int bin[], int mes_sched[64][32], int pos) {
 	for (int i = 0; i < 32; i++)
 		bin[i] = mes_sched[pos][i];
 }
 
 void create_sigma0(int s0[], int mes_sched[64][32], int pos) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_mes_schedule(bin1, mes_sched, pos - 15);
-	read_bin_from_mes_schedule(bin2, mes_sched, pos - 15);
-	read_bin_from_mes_schedule(bin3, mes_sched, pos - 15);
+	read_bin_from_arrays(bin1, mes_sched, pos - 15);
+	read_bin_from_arrays(bin2, mes_sched, pos - 15);
+	read_bin_from_arrays(bin3, mes_sched, pos - 15);
 	right_rotate(bin1, 7);
 	right_rotate(bin2, 18);
 	right_shift(bin3, 3);
@@ -105,9 +124,9 @@ void create_sigma0(int s0[], int mes_sched[64][32], int pos) {
 
 void create_sigma1(int s1[], int mes_sched[64][32], int pos) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_mes_schedule(bin1, mes_sched, pos - 2);
-	read_bin_from_mes_schedule(bin2, mes_sched, pos - 2);
-	read_bin_from_mes_schedule(bin3, mes_sched, pos - 2);
+	read_bin_from_arrays(bin1, mes_sched, pos - 2);
+	read_bin_from_arrays(bin2, mes_sched, pos - 2);
+	read_bin_from_arrays(bin3, mes_sched, pos - 2);
 	right_rotate(bin1, 17);
 	right_rotate(bin2, 19);
 	right_shift(bin3, 10);
@@ -132,8 +151,8 @@ void create_new_bin(int new_row[32], int mes_sched[64][32], int pos) {
 		bin_num2[32], plus_sigms[32], plus_bins[32];
 	create_sigma0(sigma0, mes_sched, pos);
 	create_sigma1(sigma1, mes_sched, pos);
-	read_bin_from_mes_schedule(bin_num1, mes_sched, pos - 16);
-	read_bin_from_mes_schedule(bin_num2, mes_sched, pos - 7);
+	read_bin_from_arrays(bin_num1, mes_sched, pos - 16);
+	read_bin_from_arrays(bin_num2, mes_sched, pos - 7);
 	addition_bin(plus_sigms, sigma0, sigma1);
 	addition_bin(plus_bins, bin_num1, bin_num2);
 	addition_bin(new_row, plus_bins, plus_sigms);
@@ -199,16 +218,11 @@ void get_hash_values(int h_val[8][32]) {
 	read.close();
 }
 
-void read_work_val(int bin[], int work_val[8][32], int row) {
-	for (int i = 0; i < 32; i++)
-		bin[i] = work_val[row][i];
-}
-
 void create_epsilon0(int eps0[], int work_val[8][32]) {
 	int bin1[32], bin2[32], bin3[32];
-	read_work_val(bin1, work_val, 0);
-	read_work_val(bin2, work_val, 0);
-	read_work_val(bin3, work_val, 0);
+	read_bin_from_arrays(bin1, work_val, 0);
+	read_bin_from_arrays(bin2, work_val, 0);
+	read_bin_from_arrays(bin3, work_val, 0);
 	right_rotate(bin1, 2);
 	right_rotate(bin2, 13);
 	right_rotate(bin3, 22);
@@ -217,9 +231,9 @@ void create_epsilon0(int eps0[], int work_val[8][32]) {
 
 void create_epsilon1(int eps1[], int work_val[8][32]) {
 	int bin1[32], bin2[32], bin3[32];
-	read_work_val(bin1, work_val, 4);
-	read_work_val(bin2, work_val, 4);
-	read_work_val(bin3, work_val, 4);
+	read_bin_from_arrays(bin1, work_val, 4);
+	read_bin_from_arrays(bin2, work_val, 4);
+	read_bin_from_arrays(bin3, work_val, 4);
 	right_rotate(bin1, 6);
 	right_rotate(bin2, 11);
 	right_rotate(bin3, 25);
@@ -246,10 +260,10 @@ void not_bin(int bin[]) {
 
 void create_choice(int choice[], int work_val[8][32]) {
 	int part1[32], part2[32], e[32], f[32], not_e[32], g[32];
-	read_work_val(e, work_val, 4);
-	read_work_val(not_e, work_val, 4);
-	read_work_val(f, work_val, 5);
-	read_work_val(g, work_val, 6);
+	read_bin_from_arrays(e, work_val, 4);
+	read_bin_from_arrays(not_e, work_val, 4);
+	read_bin_from_arrays(f, work_val, 5);
+	read_bin_from_arrays(g, work_val, 6);
 	not_bin(not_e);
 	and_bin(part1, e, f);
 	and_bin(part2, not_e, g);
@@ -262,9 +276,9 @@ void create_choice(int choice[], int work_val[8][32]) {
 
 void create_majority(int majority[], int work_val[8][32]) {
 	int part1[32], part2[32], part3[32], a[32], b[32], c[32];
-	read_work_val(a, work_val, 0);
-	read_work_val(b, work_val, 1);
-	read_work_val(c, work_val, 2);
+	read_bin_from_arrays(a, work_val, 0);
+	read_bin_from_arrays(b, work_val, 1);
+	read_bin_from_arrays(c, work_val, 2);
 	and_bin(part1, a, b);
 	and_bin(part2, a, c);
 	and_bin(part3, c, b);
@@ -281,11 +295,11 @@ void create_temp2(int temp2[], int work_val[8][32]) {
 void create_temp1(int temp1[], int work_val[8][32], int mes_schedule[64][32], int k_const[64][32], int pos) {
 	int h[32], bin_mes_sched[32], bin_k_const[32], eps1[32],
 		choice[32], part1[32], part2[32], part3[32];
-	read_work_val(h, work_val, 7);
+	read_bin_from_arrays(h, work_val, 7);
 	create_epsilon1(eps1, work_val);
 	create_choice(choice, work_val);
-	read_bin_from_mes_schedule(bin_mes_sched, mes_schedule, pos);
-	read_bin_from_mes_schedule(bin_k_const, k_const, pos);
+	read_bin_from_arrays(bin_mes_sched, mes_schedule, pos);
+	read_bin_from_arrays(bin_k_const, k_const, pos);
 	addition_bin(part1, h, eps1);
 	addition_bin(part2, choice, bin_k_const);
 	addition_bin(part3, part1, part2);
@@ -301,8 +315,8 @@ void addition_hash_work_val(int work_val[8][32]) {
 	int hash_val[8][32], bin_work[32], bin_hash[32], res[32];
 	get_hash_values(hash_val);
 	for (int i = 0; i < 8; i++) {
-		read_work_val(bin_hash, hash_val, i);
-		read_work_val(bin_work, work_val, i);
+		read_bin_from_arrays(bin_hash, hash_val, i);
+		read_bin_from_arrays(bin_work, work_val, i);
 		addition_bin(res, bin_hash, bin_work);
 		for (int j = 0; j < 32; j++)
 			work_val[i][j] = res[j];
@@ -313,23 +327,23 @@ void transform_work_val(int work_val[8][32], int mes_schedule[64][32], int round
 	int old_a[32], old_e[32], temp1[32], temp2[32],
 		b[32], c[32], f[32], g[32], new_a[32], new_e[32], d[32];
 	for (int i = 0; i < 64; i++) {
-		read_work_val(old_a, work_val, 0);
-		read_work_val(old_e, work_val, 4);
-		read_work_val(d, work_val, 3);
+		read_bin_from_arrays(old_a, work_val, 0);
+		read_bin_from_arrays(old_e, work_val, 4);
+		read_bin_from_arrays(d, work_val, 3);
 		create_temp1(temp1, work_val, mes_schedule, round_const, i);
 		create_temp2(temp2, work_val);
 		addition_bin(new_a, temp1, temp2);
 		addition_bin(new_e, d, temp1);
 		rewrite_work_val(work_val, 0, new_a);
 		rewrite_work_val(work_val, 4, new_e);
-		read_work_val(b, work_val, 1);
+		read_bin_from_arrays(b, work_val, 1);
 		rewrite_work_val(work_val, 1, old_a);
-		read_work_val(c, work_val, 2);
+		read_bin_from_arrays(c, work_val, 2);
 		rewrite_work_val(work_val, 2, b);
 		rewrite_work_val(work_val, 3, c);
-		read_work_val(f, work_val, 5);
+		read_bin_from_arrays(f, work_val, 5);
 		rewrite_work_val(work_val, 5, old_e);
-		read_work_val(g, work_val, 6);
+		read_bin_from_arrays(g, work_val, 6);
 		rewrite_work_val(work_val, 6, f);
 		rewrite_work_val(work_val, 7, g);
 	}
@@ -375,11 +389,10 @@ void read_hash() {
 		cout << reader;
 	read.close();
 	cout << endl;
-	cin.ignore();
 }
 
 void hash_func(int func = 0) {
-	int count_rows = ((size_of_text() * 8 + 1 + 64) / 512 + 1) * 16;
+	int count_rows = ((size_of_text(func) * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
 	int mes_schedule[64][32], round_const[64][32], work_val[8][32];
 	for (int i = 0; i < count_rows; i++)
@@ -406,10 +419,11 @@ void get_hash(char hash[]) {
 }
 
 bool valid_hash() {
-	cin.ignore();
-	char user_hash[65], user_val[10000], hash[64];
+	char user_hash[66], user_val[10000], hash[64];
 	cout << "Enter your hash: ";
-	cin.getline(user_hash, 65);
+	cin.getline(user_hash, 66);
+	if (user_hash[64] != '\0')
+		return false;
 	cout << "Enter your message: ";
 	cin.getline(user_val, 10000);
 	fstream write("files/user_value.txt", ios::out);
@@ -418,43 +432,44 @@ bool valid_hash() {
 	hash_func(1);
 	get_hash(hash);
 	for (int i = 0; i < 64; i++) {
-		if (hash[i] != user_hash[i])
+		if (hash[i] != user_hash[i]) {
 			return false;
+		}
 	}
 	return true;
 }
 
 int main() {
-	char answer = ' ';
+	char answer[3];
 	cout << "Hi\n";
-	while (answer != '5') {
-		cout << "What do you want do?" << endl;
-		cout << "1. Add text to file" << endl;
-		cout << "2. Hash your file" << endl;
-		cout << "3. Read your last hash again" << endl;
-		cout << "4. Validating the hash" << endl;
-		cout << "5. Exit" << endl;
-		cout << "Write your answer: ";
-		cin.get(answer);
-		cout << endl;
-		if (answer == '1') {
-			add_text();
-		}
-		else if (answer == '2') {
-			hash_func();
-			read_hash();
-		}
-		else if (answer == '3') {
-			read_hash();
-		}
-		else if (answer == '4') {
-			if (!valid_hash())
-				cout << "Your hash is wrong\n";
-			else
-				cout << "Your hash is correct\n";
-		}
-		else if (answer == '5');
-		else
-			cout << "Incorrect input\n";
+	cout << "What do you want do?" << endl;
+	cout << "1. Add text to file" << endl;
+	cout << "2. Hash your file" << endl;
+	cout << "3. Read your last hash again" << endl;
+	cout << "4. Validating the hash" << endl;
+	cout << "5. Exit" << endl;
+	cout << "Write your answer: ";
+	cin.getline(answer, 3);
+	if (answer[1] != '\0' || (int)answer[0] < 49 || (int)answer[0] > 53) {
+		cout << "Incorrect input\n";
+		return 0;
 	}
+	cout << endl;
+	if (answer[0] == '1') {
+		add_text();
+	}
+	else if (answer[0] == '2') {
+		hash_func();
+		read_hash();
+	}
+	else if (answer[0] == '3') {
+		read_hash();
+	}
+	else if (answer[0] == '4') {
+		if (!valid_hash())
+			cout << "Your hash is wrong\n";
+		else
+			cout << "Your hash is correct\n";
+	}
+	else if (answer[0] == '5');
 }
