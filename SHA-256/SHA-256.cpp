@@ -175,15 +175,13 @@ void create_new_bin(int new_row[32], int mes_sched[2][64][32], int pos1, int pos
 void create_message_schedule(int mes_sched[2][64][32], int** mes_block, int rows, int num, int time) {
 	int new_row[32];
 	for (int i = 15; i >= 0; i--) {
-		for (int j = 0; j < 32; j++) {
+		for (int j = 0; j < 32; j++) 
 			mes_sched[num][15 - i][j] = mes_block[(16 * (time + 1)) - 1 - i][j];
-		}
 	}
 	for (int i = 16; i < 64; i++) {
 		create_new_bin(new_row, mes_sched, num, i);
-		for (int j = 0; j < 32; j++) {
+		for (int j = 0; j < 32; j++)
 			mes_sched[num][i][j] = new_row[j];
-		}
 	}
 }
 
@@ -204,9 +202,8 @@ void get_round_constants(int k_const[64][32]) {
 	while (read >> reader) {
 		num_of_hex_symb = from_hex_char_to_int(reader);
 		bitset<4> bin(num_of_hex_symb);
-		for (int i = 3; i >= 0; i--, pos++) {
+		for (int i = 3; i >= 0; i--, pos++)
 			k_const[row][pos] = bin[i];
-		}
 		if (pos == 32) {
 			pos = 0;
 			row++;
@@ -222,9 +219,8 @@ void get_hash_values(int h_val[8][32]) {
 	while (read >> reader) {
 		num_of_hex_symb = from_hex_char_to_int(reader);
 		bitset<4> bin(num_of_hex_symb);
-		for (int i = 3; i >= 0; i--, pos++) {
+		for (int i = 3; i >= 0; i--, pos++)
 			h_val[row][pos] = bin[i];
-		}
 		if (pos == 32) {
 			pos = 0;
 			row++;
@@ -337,9 +333,8 @@ void get_work_val(int work_val[8][32], int func) {
 	while (read >> reader) {
 		num_of_hex_symb = from_hex_char_to_int(reader);
 		bitset<4> bin(num_of_hex_symb);
-		for (int i = 3; i >= 0; i--, pos++) {
+		for (int i = 3; i >= 0; i--, pos++)
 			work_val[row][pos] = bin[i];
-		}
 		if (pos == 32) {
 			pos = 0;
 			row++;
@@ -351,9 +346,8 @@ void get_work_val(int work_val[8][32], int func) {
 //plussing of hash val to work val
 void addition_hash_work_val(int work_val[8][32], int time, int func) {
 	int hash_val[8][32], bin_work[32], bin_hash[32], res[32];
-	if (time == 0) {
+	if (time == 0)
 		get_hash_values(hash_val);
-	}
 	else
 		get_work_val(hash_val, func);
 	for (int i = 0; i < 8; i++) {
@@ -419,9 +413,8 @@ void create_and_save_work_val(int work_val[8][32], int func) {
 		save.open("files/work_comp_val.txt", ios::out);
 	for (int i = 0, pos_w_val = 0; i < 8; i++, pos_w_val = 0) {
 		for (int j = 0; j < 8; j++) {
-			for (int l = 0; l < 4; l++) {
+			for (int l = 0; l < 4; l++)
 				bin[l] = work_val[i][pos_w_val++];
-			}
 			save << bin_to_char(bin);
 		}
 		save << endl;
@@ -438,9 +431,8 @@ void create_and_save_hash(int work_val[8][32], int func) {
 		save.open("files/hash_comp.txt", ios::out);
 	for (int i = 0, pos_w_val = 0; i < 8; i++, pos_w_val = 0) {
 		for (int j = 0; j < 8; j++) {
-			for (int l = 0; l < 4; l++)	{
+			for (int l = 0; l < 4; l++)
 				bin[l] = work_val[i][pos_w_val++];
-			}
 			save << bin_to_char(bin);
 		}
 	}
@@ -483,9 +475,8 @@ void get_hash(char hash[]) {
 	fstream read("files/hash_comp.txt", ios::in);
 	char reader;
 	int pos = 0;
-	while (read >> reader) {
+	while (read >> reader)
 		hash[pos++] = reader;
-	}
 	read.close();
 }
 
@@ -534,16 +525,14 @@ int main() {
 			break;
 		}
 		cout << endl;
-		if (answer[0] == '1') {
+		if (answer[0] == '1')
 			add_text();
-		}
 		else if (answer[0] == '2') {
 			hash_func();
 			read_hash();
 		}
-		else if (answer[0] == '3') {
+		else if (answer[0] == '3')
 			read_hash();
-		}
 		else if (answer[0] == '4') {
 			valid_hash(crash);
 			if (crash != 0)
