@@ -111,27 +111,32 @@ void xor_bin(int res[], int bin1[], int bin2[], int bin3[]) {
 	}
 }
 
-void read_bin_from_arrays(int bin[], int mes_sched[64][32], int pos) {
+void read_bin_from_array_3_spatial(int bin[], int array[2][64][32], int pos1, int pos2) {
 	for (int i = 0; i < 32; i++)
-		bin[i] = mes_sched[pos][i];
+		bin[i] = array[pos1][pos2][i];
 }
 
-void create_sigma0(int s0[], int mes_sched[64][32], int pos) {
+void read_bin_from_array_2_spatial(int bin[], int array[64][32], int pos) {
+	for (int i = 0; i < 32; i++)
+		bin[i] = array[pos][i];
+}
+
+void create_sigma0(int s0[], int mes_sched[2][64][32], int pos1, int pos2) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_arrays(bin1, mes_sched, pos - 15);
-	read_bin_from_arrays(bin2, mes_sched, pos - 15);
-	read_bin_from_arrays(bin3, mes_sched, pos - 15);
+	read_bin_from_array_3_spatial(bin1, mes_sched, pos1, pos2 - 15);
+	read_bin_from_array_3_spatial(bin2, mes_sched, pos1, pos2 - 15);
+	read_bin_from_array_3_spatial(bin3, mes_sched, pos1, pos2 - 15);
 	right_rotate(bin1, 7);
 	right_rotate(bin2, 18);
 	right_shift(bin3, 3);
 	xor_bin(s0, bin1, bin2, bin3);
 }
 
-void create_sigma1(int s1[], int mes_sched[64][32], int pos) {
+void create_sigma1(int s1[], int mes_sched[2][64][32], int pos1, int pos2) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_arrays(bin1, mes_sched, pos - 2);
-	read_bin_from_arrays(bin2, mes_sched, pos - 2);
-	read_bin_from_arrays(bin3, mes_sched, pos - 2);
+	read_bin_from_array_3_spatial(bin1, mes_sched, pos1, pos2 - 2);
+	read_bin_from_array_3_spatial(bin2, mes_sched, pos1, pos2 - 2);
+	read_bin_from_array_3_spatial(bin3, mes_sched, pos1, pos2 - 2);
 	right_rotate(bin1, 17);
 	right_rotate(bin2, 19);
 	right_shift(bin3, 10);
@@ -154,30 +159,30 @@ void addition_bin(int res[], int bin1[], int bin2[]) {
 
 
 //creating of new row of message schedule
-void create_new_bin(int new_row[32], int mes_sched[64][32], int pos) {
+void create_new_bin(int new_row[32], int mes_sched[2][64][32], int pos1, int pos2) {
 	int sigma0[32], sigma1[32], bin_num1[32],
 		bin_num2[32], plus_sigms[32], plus_bins[32];
-	create_sigma0(sigma0, mes_sched, pos);
-	create_sigma1(sigma1, mes_sched, pos);
-	read_bin_from_arrays(bin_num1, mes_sched, pos - 16);
-	read_bin_from_arrays(bin_num2, mes_sched, pos - 7);
+	create_sigma0(sigma0, mes_sched, pos1, pos2);
+	create_sigma1(sigma1, mes_sched, pos1, pos2);
+	read_bin_from_array_3_spatial(bin_num1, mes_sched, pos1, pos2 - 16);
+	read_bin_from_array_3_spatial(bin_num2, mes_sched, pos1, pos2 - 7);
 	addition_bin(plus_sigms, sigma0, sigma1);
 	addition_bin(plus_bins, bin_num1, bin_num2);
 	addition_bin(new_row, plus_bins, plus_sigms);
 }
 
 //adding binarys from message block to message schedule
-void create_message_schedule(int mes_sched[64][32], int** mes_block, int rows) {
+void create_message_schedule(int mes_sched[2][64][32], int** mes_block, int rows, int num, int time) {
 	int new_row[32];
-	for (int i = 0; i < 16; i++) {
+	for (int i = 15; i >= 0; i--) {
 		for (int j = 0; j < 32; j++) {
-			mes_sched[i][j] = mes_block[rows - 16 + i][j];
+			mes_sched[num][15 - i][j] = mes_block[(16 * (time + 1)) - 1 - i][j];
 		}
 	}
 	for (int i = 16; i < 64; i++) {
-		create_new_bin(new_row, mes_sched, i);
+		create_new_bin(new_row, mes_sched, num, i);
 		for (int j = 0; j < 32; j++) {
-			mes_sched[i][j] = new_row[j];
+			mes_sched[num][i][j] = new_row[j];
 		}
 	}
 }
@@ -230,9 +235,9 @@ void get_hash_values(int h_val[8][32]) {
 
 void create_epsilon0(int eps0[], int work_val[8][32]) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_arrays(bin1, work_val, 0);
-	read_bin_from_arrays(bin2, work_val, 0);
-	read_bin_from_arrays(bin3, work_val, 0);
+	read_bin_from_array_2_spatial(bin1, work_val, 0);
+	read_bin_from_array_2_spatial(bin2, work_val, 0);
+	read_bin_from_array_2_spatial(bin3, work_val, 0);
 	right_rotate(bin1, 2);
 	right_rotate(bin2, 13);
 	right_rotate(bin3, 22);
@@ -241,9 +246,9 @@ void create_epsilon0(int eps0[], int work_val[8][32]) {
 
 void create_epsilon1(int eps1[], int work_val[8][32]) {
 	int bin1[32], bin2[32], bin3[32];
-	read_bin_from_arrays(bin1, work_val, 4);
-	read_bin_from_arrays(bin2, work_val, 4);
-	read_bin_from_arrays(bin3, work_val, 4);
+	read_bin_from_array_2_spatial(bin1, work_val, 4);
+	read_bin_from_array_2_spatial(bin2, work_val, 4);
+	read_bin_from_array_2_spatial(bin3, work_val, 4);
 	right_rotate(bin1, 6);
 	right_rotate(bin2, 11);
 	right_rotate(bin3, 25);
@@ -270,10 +275,10 @@ void not_bin(int bin[]) {
 
 void create_choice(int choice[], int work_val[8][32]) {
 	int part1[32], part2[32], e[32], f[32], not_e[32], g[32];
-	read_bin_from_arrays(e, work_val, 4);
-	read_bin_from_arrays(not_e, work_val, 4);
-	read_bin_from_arrays(f, work_val, 5);
-	read_bin_from_arrays(g, work_val, 6);
+	read_bin_from_array_2_spatial(e, work_val, 4);
+	read_bin_from_array_2_spatial(not_e, work_val, 4);
+	read_bin_from_array_2_spatial(f, work_val, 5);
+	read_bin_from_array_2_spatial(g, work_val, 6);
 	not_bin(not_e);
 	and_bin(part1, e, f);
 	and_bin(part2, not_e, g);
@@ -286,9 +291,9 @@ void create_choice(int choice[], int work_val[8][32]) {
 
 void create_majority(int majority[], int work_val[8][32]) {
 	int part1[32], part2[32], part3[32], a[32], b[32], c[32];
-	read_bin_from_arrays(a, work_val, 0);
-	read_bin_from_arrays(b, work_val, 1);
-	read_bin_from_arrays(c, work_val, 2);
+	read_bin_from_array_2_spatial(a, work_val, 0);
+	read_bin_from_array_2_spatial(b, work_val, 1);
+	read_bin_from_array_2_spatial(c, work_val, 2);
 	and_bin(part1, a, b);
 	and_bin(part2, a, c);
 	and_bin(part3, c, b);
@@ -302,14 +307,14 @@ void create_temp2(int temp2[], int work_val[8][32]) {
 	addition_bin(temp2, eps0, majority);
 }
 
-void create_temp1(int temp1[], int work_val[8][32], int mes_schedule[64][32], int k_const[64][32], int pos) {
+void create_temp1(int temp1[], int work_val[8][32], int mes_schedule[2][64][32], int k_const[64][32], int pos1, int pos2) {
 	int h[32], bin_mes_sched[32], bin_k_const[32], eps1[32],
 		choice[32], part1[32], part2[32], part3[32];
-	read_bin_from_arrays(h, work_val, 7);
+	read_bin_from_array_2_spatial(h, work_val, 7);
 	create_epsilon1(eps1, work_val);
 	create_choice(choice, work_val);
-	read_bin_from_arrays(bin_mes_sched, mes_schedule, pos);
-	read_bin_from_arrays(bin_k_const, k_const, pos);
+	read_bin_from_array_3_spatial(bin_mes_sched, mes_schedule, pos1, pos2);
+	read_bin_from_array_2_spatial(bin_k_const, k_const, pos2);
 	addition_bin(part1, h, eps1);
 	addition_bin(part2, choice, bin_k_const);
 	addition_bin(part3, part1, part2);
@@ -321,13 +326,39 @@ void rewrite_work_val(int work_val[8][32], int pos, int bin[]) {
 		work_val[pos][i] = bin[i];
 }
 
+void get_work_val(int work_val[8][32], int func) {
+	fstream read;
+	if (func == 0)
+		read.open("files/work_val.txt", ios::in);
+	else
+		read.open("files/work_comp_val.txt", ios::in);
+	char reader;
+	int row = 0, pos = 0, num_of_hex_symb;
+	while (read >> reader) {
+		num_of_hex_symb = from_hex_char_to_int(reader);
+		bitset<4> bin(num_of_hex_symb);
+		for (int i = 3; i >= 0; i--, pos++) {
+			work_val[row][pos] = bin[i];
+		}
+		if (pos == 32) {
+			pos = 0;
+			row++;
+		}
+	}
+	read.close();
+}
+
 //plussing of hash val to work val
-void addition_hash_work_val(int work_val[8][32]) {
+void addition_hash_work_val(int work_val[8][32], int time, int func) {
 	int hash_val[8][32], bin_work[32], bin_hash[32], res[32];
-	get_hash_values(hash_val);
+	if (time == 0) {
+		get_hash_values(hash_val);
+	}
+	else
+		get_work_val(hash_val, func);
 	for (int i = 0; i < 8; i++) {
-		read_bin_from_arrays(bin_hash, hash_val, i);
-		read_bin_from_arrays(bin_work, work_val, i);
+		read_bin_from_array_2_spatial(bin_hash, hash_val, i);
+		read_bin_from_array_2_spatial(bin_work, work_val, i);
 		addition_bin(res, bin_hash, bin_work);
 		for (int j = 0; j < 32; j++)
 			work_val[i][j] = res[j];
@@ -335,31 +366,33 @@ void addition_hash_work_val(int work_val[8][32]) {
 }
 
 //editing of work value
-void transform_work_val(int work_val[8][32], int mes_schedule[64][32], int round_const[64][32]) {
+void transform_work_val(int work_val[8][32], int mes_schedule[2][64][32], int round_const[64][32], int pos, int time, int func) {
 	int old_a[32], old_e[32], temp1[32], temp2[32],
 		b[32], c[32], f[32], g[32], new_a[32], new_e[32], d[32];
+	if (time != 0)
+		get_work_val(work_val, func);
 	for (int i = 0; i < 64; i++) {
-		read_bin_from_arrays(old_a, work_val, 0);
-		read_bin_from_arrays(old_e, work_val, 4);
-		read_bin_from_arrays(d, work_val, 3);
-		create_temp1(temp1, work_val, mes_schedule, round_const, i);
+		read_bin_from_array_2_spatial(old_a, work_val, 0);
+		read_bin_from_array_2_spatial(old_e, work_val, 4);
+		read_bin_from_array_2_spatial(d, work_val, 3);
+		create_temp1(temp1, work_val, mes_schedule, round_const, pos, i);
 		create_temp2(temp2, work_val);
 		addition_bin(new_a, temp1, temp2);
 		addition_bin(new_e, d, temp1);
 		rewrite_work_val(work_val, 0, new_a);
 		rewrite_work_val(work_val, 4, new_e);
-		read_bin_from_arrays(b, work_val, 1);
+		read_bin_from_array_2_spatial(b, work_val, 1);
 		rewrite_work_val(work_val, 1, old_a);
-		read_bin_from_arrays(c, work_val, 2);
+		read_bin_from_array_2_spatial(c, work_val, 2);
 		rewrite_work_val(work_val, 2, b);
 		rewrite_work_val(work_val, 3, c);
-		read_bin_from_arrays(f, work_val, 5);
+		read_bin_from_array_2_spatial(f, work_val, 5);
 		rewrite_work_val(work_val, 5, old_e);
-		read_bin_from_arrays(g, work_val, 6);
+		read_bin_from_array_2_spatial(g, work_val, 6);
 		rewrite_work_val(work_val, 6, f);
 		rewrite_work_val(work_val, 7, g);
 	}
-	addition_hash_work_val(work_val);
+	addition_hash_work_val(work_val, time, func);
 }
 
 char bin_to_char(int bin[4]) {
@@ -374,6 +407,26 @@ char bin_to_char(int bin[4]) {
 		return (char)(48 + num);
 	else
 		return (char)(97 - 10 + num);
+}
+
+//saving of work values for creating next chank on base of this values
+void create_and_save_work_val(int work_val[8][32], int func) {
+	int bin[4];
+	fstream save;
+	if (func == 0)
+		save.open("files/work_val.txt", ios::out);
+	else
+		save.open("files/work_comp_val.txt", ios::out);
+	for (int i = 0, pos_w_val = 0; i < 8; i++, pos_w_val = 0) {
+		for (int j = 0; j < 8; j++) {
+			for (int l = 0; l < 4; l++) {
+				bin[l] = work_val[i][pos_w_val++];
+			}
+			save << bin_to_char(bin);
+		}
+		save << endl;
+	}
+	save.close();
 }
 
 void create_and_save_hash(int work_val[8][32], int func) {
@@ -407,17 +460,22 @@ void read_hash() {
 void hash_func(int func = 0) {
 	int count_rows = ((size_of_text(func) * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
-	int mes_schedule[64][32], round_const[64][32], work_val[8][32];
+	int mes_schedule[2][64][32], round_const[64][32], work_val[8][32];
 	for (int i = 0; i < count_rows; i++)
 		mes_block[i] = new int[32];
 	message_to_bin(mes_block, count_rows, func);
-	create_message_schedule(mes_schedule, mes_block, count_rows);
+	get_round_constants(round_const);
+	get_hash_values(work_val);
+	for (int i = 0, time = 0; time < count_rows / 16; i++, time++) {
+		if (i == 2)
+			i = 0;
+		create_message_schedule(mes_schedule, mes_block, count_rows, i, time);
+		transform_work_val(work_val, mes_schedule, round_const, i, time, func);
+		create_and_save_work_val(work_val, func);
+	}
 	for (int i = 0; i < count_rows; i++)
 		delete mes_block[i];
 	delete[] mes_block;
-	get_round_constants(round_const);
-	get_hash_values(work_val);
-	transform_work_val(work_val, mes_schedule, round_const);
 	create_and_save_hash(work_val, func);
 }
 
