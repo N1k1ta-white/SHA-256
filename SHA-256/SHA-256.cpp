@@ -20,16 +20,19 @@
 
 using namespace std;
 
+const int STAND_SIZE = 10000;
+
 void add_text() {
-	char text[10000];
+	char text[STAND_SIZE];
 	cout << "Write your text: ";
-	cin.getline(text, 10000);
+	cin.getline(text, STAND_SIZE - 1);
 	fstream write("files/message.txt", ios::out);
 	write << text;
 	write.close();
-	cout << endl;
 }
 
+
+//searching number of symbols in message
 int size_of_text(int func) {
 	char reader;
 	fstream read;
@@ -44,6 +47,8 @@ int size_of_text(int func) {
 	return res;
 }
 
+
+//converting text to binary
 void message_to_bin(int **mes_block, int chunks, int func) {
 	char reader, column = 0, row = 0;
 	fstream read;
@@ -133,6 +138,7 @@ void create_sigma1(int s1[], int mes_sched[64][32], int pos) {
 	xor_bin(s1, bin1, bin2, bin3);
 }
 
+//binary plussing
 void addition_bin(int res[], int bin1[], int bin2[]) {
 	for (int i = 0; i < 32; i++)
 		res[i] = 0;
@@ -146,6 +152,8 @@ void addition_bin(int res[], int bin1[], int bin2[]) {
 	}
 }
 
+
+//creating of new row of message schedule
 void create_new_bin(int new_row[32], int mes_sched[64][32], int pos) {
 	int sigma0[32], sigma1[32], bin_num1[32],
 		bin_num2[32], plus_sigms[32], plus_bins[32];
@@ -158,6 +166,7 @@ void create_new_bin(int new_row[32], int mes_sched[64][32], int pos) {
 	addition_bin(new_row, plus_bins, plus_sigms);
 }
 
+//adding binarys from message block to message schedule
 void create_message_schedule(int mes_sched[64][32], int** mes_block, int rows) {
 	int new_row[32];
 	for (int i = 0; i < 16; i++) {
@@ -173,6 +182,7 @@ void create_message_schedule(int mes_sched[64][32], int** mes_block, int rows) {
 	}
 }
 
+//get number of symb in hex
 int from_hex_char_to_int(char hex) {
 	int num;
 	if ((int)hex >= 97 && (int)hex <= 102)
@@ -311,6 +321,7 @@ void rewrite_work_val(int work_val[8][32], int pos, int bin[]) {
 		work_val[pos][i] = bin[i];
 }
 
+//plussing of hash val to work val
 void addition_hash_work_val(int work_val[8][32]) {
 	int hash_val[8][32], bin_work[32], bin_hash[32], res[32];
 	get_hash_values(hash_val);
@@ -323,6 +334,7 @@ void addition_hash_work_val(int work_val[8][32]) {
 	}
 }
 
+//editing of work value
 void transform_work_val(int work_val[8][32], int mes_schedule[64][32], int round_const[64][32]) {
 	int old_a[32], old_e[32], temp1[32], temp2[32],
 		b[32], c[32], f[32], g[32], new_a[32], new_e[32], d[32];
@@ -391,6 +403,7 @@ void read_hash() {
 	cout << endl;
 }
 
+//main function for creating of hash
 void hash_func(int func = 0) {
 	int count_rows = ((size_of_text(func) * 8 + 1 + 64) / 512 + 1) * 16;
 	int** mes_block = new int* [count_rows];
@@ -418,14 +431,19 @@ void get_hash(char hash[]) {
 	read.close();
 }
 
-bool valid_hash() {
-	char user_hash[66], user_val[10000], hash[64];
+
+//checking hash is valid or not
+void valid_hash(int &crash) {
+	char user_hash[66], user_val[STAND_SIZE], hash[64];
 	cout << "Enter your hash: ";
 	cin.getline(user_hash, 66);
-	if (user_hash[64] != '\0')
-		return false;
+	if (user_hash[64] != '\0') {
+		crash++;
+		cout << "Your hash is wrong\n\n";
+		return;
+	}
 	cout << "Enter your message: ";
-	cin.getline(user_val, 10000);
+	cin.getline(user_val, STAND_SIZE);
 	fstream write("files/user_value.txt", ios::out);
 	write << user_val;
 	write.close();
@@ -433,43 +451,47 @@ bool valid_hash() {
 	get_hash(hash);
 	for (int i = 0; i < 64; i++) {
 		if (hash[i] != user_hash[i]) {
-			return false;
+			cout << "Your hash is wrong\n";
+			return;
 		}
 	}
-	return true;
+	cout << "Your hash is correct\n";
 }
 
 int main() {
 	char answer[3];
+	int crash = 0;
 	cout << "Hi\n";
-	cout << "What do you want do?" << endl;
-	cout << "1. Add text to file" << endl;
-	cout << "2. Hash your file" << endl;
-	cout << "3. Read your last hash again" << endl;
-	cout << "4. Validating the hash" << endl;
-	cout << "5. Exit" << endl;
-	cout << "Write your answer: ";
-	cin.getline(answer, 3);
-	if (answer[1] != '\0' || (int)answer[0] < 49 || (int)answer[0] > 53) {
-		cout << "Incorrect input\n";
-		return 0;
+	while (true) {
+		cout << "\nWhat do you want do?\n";
+		cout << "1. Add text to file\n";
+		cout << "2. Hash your file\n";
+		cout << "3. Read your last hash again\n";
+		cout << "4. Validating the hash\n";
+		cout << "5. Exit\n";
+		cout << "Write your answer: ";
+		cin.getline(answer, 3);
+		if (answer[1] != '\0' || (int)answer[0] < 49 || (int)answer[0] > 53) {
+			cout << "Incorrect input\n";
+			break;
+		}
+		cout << endl;
+		if (answer[0] == '1') {
+			add_text();
+		}
+		else if (answer[0] == '2') {
+			hash_func();
+			read_hash();
+		}
+		else if (answer[0] == '3') {
+			read_hash();
+		}
+		else if (answer[0] == '4') {
+			valid_hash(crash);
+			if (crash != 0)
+				break;
+		}
+		else if (answer[0] == '5')
+			break;
 	}
-	cout << endl;
-	if (answer[0] == '1') {
-		add_text();
-	}
-	else if (answer[0] == '2') {
-		hash_func();
-		read_hash();
-	}
-	else if (answer[0] == '3') {
-		read_hash();
-	}
-	else if (answer[0] == '4') {
-		if (!valid_hash())
-			cout << "Your hash is wrong\n";
-		else
-			cout << "Your hash is correct\n";
-	}
-	else if (answer[0] == '5');
 }
